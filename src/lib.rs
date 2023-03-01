@@ -1,4 +1,5 @@
-mod agent;
+pub mod agent;
+pub mod cli;
 
 extern crate os_type;
 
