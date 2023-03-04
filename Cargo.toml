@@ -1,10 +1,10 @@
 [package]
 name = "hermesd"
 description = "Exports designated system properties to the upstream service"
-version = "2023.2.1"
+version = "2023.3.1"
 edition = "2021"
 license = "MIT"
-authors = ["NWLNEXUS LLC"]
+authors = ["NWLNEXUS LLC  <support@nwlnexus.net>"]
 
 [package.metadata.deb]
 extended-description = "Exports designated system properties to the upstream service"
@@ -12,7 +12,7 @@ depends = "$auto, systemd"
 section = "admin"
 priority = "optional"
 assets = [
-    ["target/release/hermesd", "usr/bin/hello", "755"],
+    ["target/release/hermesd", "usr/bin/hermesd", "755"],
     ["debian/hermesd.service", "/lib/systemd/system/hermesd.service", "644"],
 ]
 maintainer-scripts = "debian/scripts"
@@ -21,7 +21,7 @@ systemd-units = { enable = false }
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
-clap = { version = "4.1.6", features = ["derive", "env", "string"] }
+clap = { version = "4.1.6", features = ["cargo", "derive", "env", "string", "suggestions"] }
+lazy_static = "1.4.0"
+log = "0.4.17"
 os_type = "2.6.0"
-serde = { version = "1.0.152", features = ["derive", "serde_derive"] }
-twelf = { version = "0.10.0", features = ["env", "clap", "toml"] }

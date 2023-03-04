@@ -1,5 +1,8 @@
 pub mod agent;
 pub mod cli;
+pub mod constants;
+pub mod logger;
+pub mod utils;
 
 extern crate os_type;
 

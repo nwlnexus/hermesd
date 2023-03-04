@@ -1,15 +1,15 @@
-use clap::CommandFactory;
-use hermesd::cli::{CliOptions, DFT_CFG_FILE};
-use twelf::Layer;
+use clap::Parser;
+use hermesd::cli::{CliConfig, SubCmds};
 
 fn main() {
-    let matches = CliOptions::command().get_matches();
-    let mut config_layers = Vec::with_capacity(2);
-    if std::path::Path::new(DFT_CFG_FILE).exists() {
-        config_layers.push(Layer::Toml(DFT_CFG_FILE.into()));
-    }
-    config_layers.push(Layer::Clap(matches));
-    let config = CliOptions::with_layers(&config_layers).unwrap();
+    let parsed_cli = CliConfig::parse();
 
-    eprintln!("Config: {:?}", config);
+    eprintln!("Config: {:?}", parsed_cli);
+
+    match parsed_cli.cmds {
+        SubCmds::Run { token } => println!("Token supplied: {}", token),
+        SubCmds::Register { register_uri } => register_node(register_uri),
+    };
 }
+
+fn register_node(_u: String) {}
