@@ -6,6 +6,10 @@ edition = "2021"
 license = "MIT"
 authors = ["NWLNEXUS LLC  <support@nwlnexus.net>"]
 
+[[bin]]
+name = "hermesd"
+
+
 [package.metadata.deb]
 extended-description = "Exports designated system properties to the upstream service"
 depends = "$auto, systemd"
@@ -22,6 +26,9 @@ systemd-units = { enable = false }
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]
 clap = { version = "4.1.6", features = ["cargo", "derive", "env", "string", "suggestions"] }
+color-eyre = "0.6.2"
+env_logger = "0.10.0"
 lazy_static = "1.4.0"
 log = "0.4.17"
 os_type = "2.6.0"
+tracing = "0.1.37"

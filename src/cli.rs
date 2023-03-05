@@ -1,5 +1,7 @@
-use clap::{self, crate_version, Parser, Subcommand};
+use clap::{self, crate_version, Parser, Subcommand, ValueEnum};
+use env_logger::Env;
 use lazy_static::lazy_static;
+use log::{debug, info};
 
 // We need to specify our version in a static because we've painted clap
 // into a corner. We've told it that every string we give it will be
@@ -10,7 +12,7 @@ lazy_static! {
 }
 
 const ABOUT: &str = "
-hermesd registers this node and begins polling to send/receive messagin from the controller.
+hermesd registers this node and begins polling to send/receive messaging from the controller.
 Use -h for short descriptions and --help for more details.
 Project home page: https://github.com/nwlnexus/hermesd
 ";
@@ -38,14 +40,18 @@ about = ABOUT,
 long_about = None
 )]
 pub struct CliConfig {
+    /// Set the log level of the application.
+    #[arg(value_enum, short, long, env = format!("{}_LOG_LEVEL", BIN_NAME))]
+    log_level: Option<LogLevels>,
+
     /// Sub commands for the application.
     #[command(subcommand)]
-    pub cmds: SubCmds,
+    cmds: SubCmds,
 }
 
 /// Valid sub commands for the application.
 #[derive(Subcommand, Debug, Clone)]
-pub enum SubCmds {
+enum SubCmds {
     /// Runs the application and begins reporting metrics.
     Run {
         /// Secure token provided by the controller for endpoint check in.
@@ -60,6 +66,14 @@ pub enum SubCmds {
     },
 }
 
+#[derive(ValueEnum, Debug, Clone)]
+enum LogLevels {
+    Debug,
+    Info,
+    Warn,
+    Error,
+}
+
 /// Return the "long" format of ripgrep's version string.
 ///
 /// If a revision hash is given, then it is used. If one isn't given, then
@@ -68,7 +82,7 @@ pub enum SubCmds {
 ///
 /// If `cpu` is true, then the version string will include the compiled and
 /// runtime CPU features.
-pub fn long_version(revision_hash: Option<&str>, cpu: bool) -> String {
+fn long_version(revision_hash: Option<&str>, cpu: bool) -> String {
     // Do we have a git hash?
     // (Yes, if ripgrep was built on a machine with `git` installed.)
     let hash = match revision_hash.or(option_env!("HERMESD_BUILD_GIT_HASH")) {
@@ -139,3 +153,37 @@ fn runtime_cpu_features() -> Vec<&'static str> {
 fn runtime_cpu_features() -> Vec<&'static str> {
     vec![]
 }
+
+/// Implements the methods on the command interface.
+impl CliConfig {
+    pub fn exec(self) {
+        match self.log_level {
+            Some(LogLevels::Debug) => {
+                env_logger::init_from_env(Env::new().filter_or("HERMESD_LOG_LEVEL", "debug"))
+            }
+            Some(LogLevels::Info) => {
+                env_logger::init_from_env(Env::new().filter_or("HERMESD_LOG_LEVEL", "info"))
+            }
+            Some(LogLevels::Warn) => {
+                env_logger::init_from_env(Env::new().filter_or("HERMESD_LOG_LEVEL", "warn"))
+            }
+            Some(LogLevels::Error) | None => {
+                env_logger::init_from_env(Env::new().filter_or("HERMESD_LOG_LEVEL", "error"))
+            }
+        }
+
+        debug!("Parsed cli: {:?}", self);
+        match self.cmds {
+            SubCmds::Run { token } => {
+                info!("Logging INFO, token in use: {}", token);
+                eprintln!("Using token: {}", token);
+            }
+            SubCmds::Register { register_uri } => {
+                register_node(register_uri);
+            }
+        }
+    }
+}
+
+/// Registers the node with the upstream controller.
+fn register_node(_u: String) {}

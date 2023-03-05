@@ -1,12 +1,6 @@
-pub mod agent;
-pub mod cli;
-pub mod constants;
-pub mod logger;
-pub mod utils;
+mod agent;
+mod cli;
+mod utils;
 
-extern crate os_type;
-
-pub fn generate_service_agent() {
-    let os = os_type::current_platform();
-    eprintln!("Detected OS: {:?}", os.os_type);
-}
+#[doc(hidden)]
+pub use cli::CliConfig;
