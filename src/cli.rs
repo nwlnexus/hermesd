@@ -1,7 +1,7 @@
 use clap::{self, crate_version, Parser, Subcommand, ValueEnum};
 use env_logger::Env;
 use lazy_static::lazy_static;
-use log::{debug, info};
+use log::{debug, info, warn};
 
 // We need to specify our version in a static because we've painted clap
 // into a corner. We've told it that every string we give it will be
@@ -40,10 +40,6 @@ about = ABOUT,
 long_about = None
 )]
 pub struct CliConfig {
-    /// Set the log level of the application.
-    #[arg(value_enum, short, long, env = format!("{}_LOG_LEVEL", BIN_NAME))]
-    log_level: Option<LogLevels>,
-
     /// Sub commands for the application.
     #[command(subcommand)]
     cmds: SubCmds,
@@ -55,15 +51,21 @@ enum SubCmds {
     /// Runs the application and begins reporting metrics.
     Run {
         /// Secure token provided by the controller for endpoint check in.
-        #[arg(short, long, env = format!("{}_TOKEN", BIN_NAME))]
+        #[arg(short, long, env = format ! ("{}_TOKEN", BIN_NAME))]
         token: String,
     },
-    /// Registers the node
-    Register {
-        /// URI of the controller with which to register the application.
-        #[arg(short, long, env = format!("{}_REGISTER_URL", BIN_NAME))]
-        register_uri: String,
+    /// Installs the appropriate files to run hermesd as a service.
+    Service {
+        /// Install service files.
+        #[command(subcommand)]
+        service_cmds: SvcCmds,
     },
+}
+
+/// Valid sub commands for thr service parent command.
+#[derive(Subcommand, Debug, Clone)]
+enum SvcCmds {
+    Install {},
 }
 
 #[derive(ValueEnum, Debug, Clone)]
@@ -157,33 +159,17 @@ fn runtime_cpu_features() -> Vec<&'static str> {
 /// Implements the methods on the command interface.
 impl CliConfig {
     pub fn exec(self) {
-        match self.log_level {
-            Some(LogLevels::Debug) => {
-                env_logger::init_from_env(Env::new().filter_or("HERMESD_LOG_LEVEL", "debug"))
-            }
-            Some(LogLevels::Info) => {
-                env_logger::init_from_env(Env::new().filter_or("HERMESD_LOG_LEVEL", "info"))
-            }
-            Some(LogLevels::Warn) => {
-                env_logger::init_from_env(Env::new().filter_or("HERMESD_LOG_LEVEL", "warn"))
-            }
-            Some(LogLevels::Error) | None => {
-                env_logger::init_from_env(Env::new().filter_or("HERMESD_LOG_LEVEL", "error"))
-            }
-        }
-
+        env_logger::init_from_env(Env::new().filter_or(format!("{}_LOG_LEVEL", BIN_NAME), "info"));
         debug!("Parsed cli: {:?}", self);
         match self.cmds {
             SubCmds::Run { token } => {
                 info!("Logging INFO, token in use: {}", token);
                 eprintln!("Using token: {}", token);
             }
-            SubCmds::Register { register_uri } => {
-                register_node(register_uri);
+            SubCmds::Service { service_cmds } => {
+                warn!("THE API for this call will be chaning soon.");
+                eprintln!("Called service command with action: {:?}", service_cmds);
             }
         }
     }
 }
-
-/// Registers the node with the upstream controller.
-fn register_node(_u: String) {}
